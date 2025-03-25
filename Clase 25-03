@@ -1,0 +1,57 @@
+/*comando case*/
+select
+    CASE 
+        /*WHEN SALARIO>=0 AND SALARIO <=500000*/
+        WHEN SALARIO BETWEEN 0 AND 500000 THEN 'SUELDO BAJO'
+        WHEN SALARIO BETWEEN 500001 AND 1000000 THEN 'SUELDO MEDIO'
+        WHEN SALARIO > 100000 THEN 'SUELDO ALTO'
+        ELSE 'SUELDO NO VALIDO' -- <- VE LOS NUMEROS NEGATIVOS.
+    END 
+from dual;
+
+SELECT
+    CASE 25
+        WHEN 1 THEN 'UNO'
+        WHEN 2 THEN 'DOS'
+        WHEN 3 THEN 'TRES'
+        ELSE 'OTRO VALOR'
+    END
+FROM DUAL;
+
+SELECT
+    alumnoid,
+    nul (multa,0), -- <- todos los valores nulos los remplaza con un 0.
+    nvl(to_char(multa),'No tiene multa'), -- <- transformar los null a "no tiene multa"
+    nvl2(multa,'Tiene multa','No tiene multa'),
+    case when multa >0 then 'Tiene 'else'NO RIENE 'end
+FROM PRESTAMO;
+
+select count(nvl(multa)) from prestamo; -- <- cuenta la cantidad de valores nulos
+select count(multa) from prestamo; -- <- cuenta la cantidad total de multas
+
+-- Guia 2 Caso 5:
+select
+    tituloid "COdigo de el libro",
+    count(*) "Total de veces solicitado",
+    case count(*)
+        WHEN count(*) = 1 then 'No se requiere nuevo ejemplar'
+        when count(*) between 2 and 3 then 'Se requiere 1 nuevo ejemplar'
+        when count(*) between 4 and 5 then 'Se requieren 2 nuevos ejemplares'
+        when count(*) > 5 then 'Se requieren 4 nuevos ejemplares '
+    end "Sugerencia"
+from prestamo
+where extract(year from fecha_ini_prestamo) = extract(year from sysdate) -1
+group by tituloid
+order by 2 desc,1;
+-- comando inner join:
+--Unir 2 o mas tablas en una consulta
+select
+    al.nombre||' '||al.paterno "ALumno",
+    al.carreraid "Coodigo Carrera",
+    ca.descripcion "Carrera",
+    ca.escuelaid "Codigo escuela",
+    es.descripcion "Escuela"
+from alumno al 
+join carrera ca on al.carreraid = ca.carreraid
+join escuela es on es.escuelaid = ca.escuelaid
+order by es.descripcion, ca.descripcion;
