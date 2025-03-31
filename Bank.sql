@@ -1682,3 +1682,42 @@ join credito c on cc.cod_credito=c.cod_credito
 where extract(year from cc.fecha_otorga_cred)= extract (year from sysdate) -1
 group by to_char(cc.fecha_solic_cred,'MMYYYY'),c.nombre_credito,cc.monto_solicitado,monto_credito
 order by 1,2;
+--Guia 3 caso 4
+Select
+    to_char(numrun,'99g999g999')||'-'|| upper(dvrun) "Run cliente",
+    c.pnombre||' '||c.snombre||' '||c.appaterno||' '||apmaterno "Nombre Cliente",
+    to_char(sum(monto_solicitado),'999g999g999') "Monto total ahorrado",
+    case
+        when sum(cc.monto_solicitado) between 100000 and 1000000 then 'Bronce'
+        when sum(cc.monto_solicitado) between 1000001 and 4000000 then 'Plata'
+        when sum(cc.monto_solicitado) between 4000001 and 8000000 then 'Silver'
+        when sum(cc.monto_solicitado) between 8000001 and 15000000 then 'Gold'
+        when sum(cc.monto_solicitado) > 15000001 then 'Platinum'
+    end "categoria cliente"
+    
+from cliente c join credito_cliente cc on c.nro_cliente = cc.nro_cliente
+group by c.numrun,c.dvrun,c.pnombre,c.snombre,c.appaterno,c.apmaterno,cc.monto_solicitado
+order by c.appaterno desc,cc.monto_solicitado asc;
+--Guia 3 caso 5
+select
+    extract(year from p.fecha_solic_prod) "Año tributario",
+    to_char(c.numrun,'00g000g000')||'-'||upper(c.dvrun)"Run Cliente",
+    initcap(c.pnombre)||' '||substr(initcap(c.snombre),1,1)||' '||initcap(c.appaterno)||' '||initcap(c.apmaterno) "Nombre Cliente",
+    count(p.nro_solic_prod) "TOTAL_PROD_INV_AFECTOS_IMPTO",
+    to_char(sum(monto_total_ahorrado),'$999g999g999') "Monto Total Ahorrado"
+from producto_inversion_cliente p
+join cliente c on p.nro_cliente=c.nro_cliente
+group by p.nro_solic_prod,c.numrun,c.dvrun,c.pnombre,c.snombre,c.appaterno,c.apmaterno,p.monto_total_ahorrado,p.fecha_solic_prod
+order by c.appaterno;
+--Guia 3 Caso 6 
+--Informe 1
+Select
+    to_char(c.numrun,'99g999g999')||'-'|| upper(c.dvrun) "Run Cliente",
+    initcap(c.pnombre) ||' '|| initcap(c.snombre)||' '||initcap(c.appaterno)||' '||initcap(apmaterno) "Nombre cliente",
+    count(cc.nro_solic_credito) "Total creditos solicitados",
+    to_char(sum(monto_solic_credito),'$999g999g999') "Monto total credito"
+from cliente c join credito_cliente cc on c.nro_cliente = cc.nro_cliente
+group by cc.nro_solic_credito,c.numrun,c.dvrun,c.pnombre,c.snombre,c.appaterno,c.appaterno,cc.fecha_solic_cred
+where extract(year from cc.fecha_solic_cred) = extract(year from sysdate)-1
+order by appaterno asc;
+--Informe 2
