@@ -90,6 +90,14 @@ select
     j.nombre_empleado,
     e.nombre_empleado
 from empleado J join empleado e on j.rut=e.rut_jefe;
+/*Nonequinjoin: un join entre dos tablas que en principio no tienen relacion*/
+select
+    e.nombre_empleado,
+    e.anios_antiguedad,
+    p.porcentaje_bono||'%'
+from empleado e join porc_bono_anios p on e.anios_antiguedad between p.anio_ini and p.anio_ter;
+
+
 
 
 
