@@ -1648,7 +1648,7 @@ select
     to_char(c.numrun,'00g000g000'||'-'||c.dvrun) "Run cliente",
     initcap(c.pnombre||' '||c.snombre||' '||c.appaterno) "Nombre Cliente",
     po.nombre_prof_ofic "Profesion/oficio",
-    to_char(c.fecha_nacimiento,'DD "de" Month') "Dia de cumpleaños"
+    to_char(c.fecha_nacimiento,'DD "de" Month') "Dia de cumpleaï¿½os"
 from cliente c join profesion_oficio po on c.cod_prof_ofic = po.cod_prof_ofic
 where extract(month from c.fecha_nacimiento)= extract(month from sysdate)+1
 order by 4,c.appaterno;
@@ -1684,7 +1684,7 @@ group by to_char(cc.fecha_solic_cred,'MMYYYY'),c.nombre_credito,cc.monto_solicit
 order by 1,2;
 --Guia 3 caso 4
 Select
-    to_char(numrun,'99g999g999')||'-'|| upper(dvrun) "Run cliente",
+    to_char(numrun,'00g000g000')||'-'|| upper(dvrun) "Run cliente",
     c.pnombre||' '||c.snombre||' '||c.appaterno||' '||apmaterno "Nombre Cliente",
     to_char(sum(monto_solicitado),'999g999g999') "Monto total ahorrado",
     case
@@ -1698,9 +1698,26 @@ Select
 from cliente c join credito_cliente cc on c.nro_cliente = cc.nro_cliente
 group by c.numrun,c.dvrun,c.pnombre,c.snombre,c.appaterno,c.apmaterno,cc.monto_solicitado
 order by c.appaterno desc,cc.monto_solicitado asc;
+--guia 3 casoo 4
+
+select 
+    to_char(numrun,'00g000g000')||'-'|| upper(dvrun) "Run cliente",    
+    c.pnombre||' '||c.snombre||' '||c.appaterno||' '||apmaterno "Nombre Cliente",
+    to_char(sum(pic.monto_total_ahorrado)+sum(pic.ahorro_minimo_mensual),'$999g999g999') "Monto total ahorrado",
+    case
+        when sum(pic.monto_total_ahorrado)+sum(pic.ahorro_minimo_mensual) between 100000 and 1000000 then 'Bronce'
+        when sum(pic.monto_total_ahorrado)+sum(pic.ahorro_minimo_mensual) between 1000001 and 4000000 then 'Plata'
+        when sum(pic.monto_total_ahorrado)+sum(pic.ahorro_minimo_mensual) between 4000001 and 8000000 then 'Silver'
+        when sum(pic.monto_total_ahorrado)+sum(pic.ahorro_minimo_mensual) between 8000001 and 15000000 then 'Gold'
+        when sum(pic.monto_total_ahorrado)+sum(pic.ahorro_minimo_mensual) > 15000001 then 'Platinum'
+        else 'Sin categoria'
+    end "categoria cliente"
+from cliente c join producto_inversion_cliente pic on c.nro_cliente=pic.nro_cliente
+group by c.numrun,c.dvrun,c.pnombre,c.snombre,c.appaterno,c.apmaterno,pic.monto_total_ahorrado
+order by c.appaterno,3 desc;
 --Guia 3 caso 5
 select
-    extract(year from p.fecha_solic_prod) "Año tributario",
+    extract(year from p.fecha_solic_prod) "Aï¿½o tributario",
     to_char(c.numrun,'00g000g000')||'-'||upper(c.dvrun)"Run Cliente",
     initcap(c.pnombre)||' '||substr(initcap(c.snombre),1,1)||' '||initcap(c.appaterno)||' '||initcap(c.apmaterno) "Nombre Cliente",
     count(p.nro_solic_prod) "TOTAL_PROD_INV_AFECTOS_IMPTO",
