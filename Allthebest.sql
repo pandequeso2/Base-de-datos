@@ -1494,3 +1494,33 @@ join Aporte_SBif a on ttc.monto_total_transaccion between a.monto_inf_av_sav and
 where extract(year from ttc.fecha_transaccion) = extract(year from sysdate) and ttt.cod_tptran_tarjeta in(102,103)
 GROUP BY TTC.monto_total_transaccion,ttc.fecha_transaccion,ttt.nombre_tptran_tarjeta,A.porc_aporte_sbif
 order by 1,2;
+-- Guia 4 Caso 4:
+Select
+    to_char(c.numrun,'000g000g000') ||'-'|| upper(c.dvrun) "RUN CLIENTE",
+    c.pnombre||' '||c.snombre||' '||c.appaterno||' '||c.apmaterno "NOMBRE COMPLETO",
+    to_char(nvl(sum(ttc.monto_total_transaccion),0),'$999g999g999') "COMPRAS/AVANCES/S.AVANCES",
+    CASE 
+        when nvl(sum(ttc.monto_total_transaccion),0) between 0 and 10000 then 'SIN CATEGORIZACION'
+        when nvl(sum(ttc.monto_total_transaccion),0) between 10000 and 1000000 the 'BRONCE'
+        when nvl(sum(ttc.monto_total_transaccion),0) between 1000001 and 4000000 the 'PLATA'
+        when nvl(sum(ttc.monto_total_transaccion),0) between 4000001 and 8000000 the 'SILVER'
+        when nvl(sum(ttc.monto_total_transaccion),0) between 8000001 and 15000000 the 'GOLD'
+        when nvl(sum(ttc.monto_total_transaccion),0) >15000000 THEN'PLATINIUM'
+    END "CATEGORIZACION DEL CLIENTE"
+from cliente c
+left JOIN TARJETA_CLIENTE tc on c.numrun = tc.numrun
+left join TRANSACCION_TARJETA_CLIENTE ttc on ttc.nro_tarjeta=tc.nro_tarjeta
+group by c.numrun,c.dvrun,c.pnombre,c.snombre,c.appaterno,c.apmaterno
+order by c.appaterno,,3 desc;
+--Guia 4 caso 5:
+select 
+    to_char(numrun,'000g000g000')||'-'||upper(dvrun) "RUN CLIENTE", 
+    initcap(c.pnombre||' '||substr(c.snombre,1,1)||'. '||c.appaterno||' '||c.apmaterno) "NOMBRE CLIENTE",
+    count(ttc.cod_tptran_tarjeta) "TOTAL SUPER AVANCES VIGENTES",
+    TO_CHAR(sum(ttc.monto_transaccion),'$999g999g999') "MONTO TOTAL SUPER AVANCES"
+from cliente c
+join tarjeta_cliente tc on c.numrun=tc.numrun
+join Transaccion_tarjeta_cliente ttc on tc.nro_tarjeta=ttc.nro_tarjeta
+where extract(year from ttc.fecha_transaccion) = extract(year from sysdate) +1 and ttc.cod_tptran_tarjeta=103
+group by c.numrun,c.dvrun,c.pnombre,c.snombre,c.appaterno,c.apmaterno,ttc.cod_tptran_tarjeta
+order by appaterno;
