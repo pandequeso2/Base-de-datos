@@ -1,0 +1,43 @@
+--Prueba 1 caso 1
+select MAX(COUNT(*)) from propiedad_arrendada p group by p.numrut_cli;
+--Consulta principal
+Select
+    to_char(c.numrut_cli,'00G000G000')||'-'||uPPER(dvrut_cli) "RUN CLIENTE",
+    initcap(c.nombre_cli||' '||c.appaterno_cli||' '||c.apmaterno_cli) "NOMBRE CLIENTE",
+    TO_CHAR(c.renta_cli,'$999g999g999') "RENTA",
+    nvl(to_char(c.celular_cli),'SIN CELULAR') "CELULAR",
+    count(pa.numrut_cli) "CNTIDAD DE ARRIENDOS"
+from cliente c
+left join propiedad_arrendada pa on pa.numrut_cli=c.numrut_cli
+where c.renta_cli<1300000
+group by c.numrut_cli,c.dvrut_cli,c.nombre_cli,c.appaterno_cli,c.apmaterno_cli,c.renta_cli,c.celular_cli
+having count(*)<(select MAX(COUNT(*)) from propiedad_arrendada p group by p.numrut_cli)
+order by c.appaterno_cli;
+--Prueba 1 Caso 2
+select
+    extract(year from sysdate) "ANNO_DE_REGISTRO",
+    p.nro_propiedad,
+    p.valor_arriendo,
+    p.valor_gasto_comun,
+    count(pa.nro_propiedad) "TOTAL_VECES_ARRENDADO"
+from propiedad p
+left join propiedad_arrendada pa on p.nro_propiedad=pa.nro_propiedad
+group by p.nro_propiedad,p.valor_arriendo,p.valor_gasto_comun,pa.nro_propiedad
+ORDER BY p.nro_propiedad;
+--Prueba 1 Caso 3
+select
+  to_char(e.numrut_emp)||'-'||upper(e.dvrut_emp) "RUT EMPLEADO",
+  initcap(e.nombre_emp||' '||e.appaterno_emp||' '||e.apmaterno_emp)"NOMBRE COMPLETO",
+  count(p.nro_propiedad) "CANTIDAD ARRIENDOS VIGENTES",
+  to_char(avg(p.valor_arriendo),'$999g999g999') "PROMEDIO ARRIENDO",
+  CASE
+    when round(avg(p.valor_arriendo)) > 800001 then to_char(avg(p.valor_arriendo*0.15),'$999g999') 
+    when round(avg(p.valor_arriendo)) between 600001 and 800000 then to_char(round(p.valor_arriendo)*0.10,'$999g999')
+    when round(avg(p.valor_arriendo)) between 300001 and 600000 then to_char(round(p.valor_arriendo)*0.005,'999g999')
+    when round(avg(p.valor_arriendo)) <300000 then to_char(round(p.valor_arriendo)*1,'$999g999')
+  END "BONO ARRIENDO"
+from empleado e
+join propiedad p on p.numrut_emp=e.numrut_emp
+join propiedad_arrendada pa on pa.nro_propiedad=p.nro_propiedad
+having count(p.nro_propiedad)>1
+group by e.numrut_emp,e.dvrut_emp,e.nombre_emp,e.appaterno_emp,e.apmaterno_emp,pa.nro_propiedad,p.valor_arriendo,p.nro_propiedad;
