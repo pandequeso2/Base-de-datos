@@ -1,0 +1,1 @@
+select * from tec23_1.v_persona_pic;
