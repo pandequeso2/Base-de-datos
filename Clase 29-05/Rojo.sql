@@ -1,0 +1,1 @@
+select * from MDY2131_P13_2.v_total_creditos_cliente;

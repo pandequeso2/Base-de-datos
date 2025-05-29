@@ -1,0 +1,1 @@
+select * from MDY2131_P13_3.V_DATOS_CLIENTES;
