@@ -1,123 +1,155 @@
-/*BLOQUES ANONIMOS
+create table Empleado(
+    id_empleado number(5) primary key,
+    nombre varchar2(100),
+    salario number(10,2)
+);
+insert into empleado values(10,'Pedro Pascal', 2000);
+insert into empleado values(20,'Alan gajardo', 1450);
+insert into empleado values(30,'Juan Pablo Ramos', 1500);
+insert into empleado values(40,'Camila Lara', 3500);
+insert into empleado values(50,'Alejandra Flores', 1300);
 
-Es una unidad de codigos SQL qu se ejecuta de manera annima, eto quiere decir 
-qu a diferencia de los procedimientos, funciones, trigger, los bloques anonios no se guardan.
-Una vez que se ejecutan estos terminan y desaparece de la memoria
-
-Estructura:
-
-DECKARE
-    --Seccon opcional donde declaramos variabbles
-BEGIN
-    --Seccion obligatoria donde colocamos el codigo a ejecutar
-EXCEPTION
-    Seccion obligatoria, controlar errores
-END
-    --Seccion obligatoria para terminar el bloque
-*/
-
---COmando para actvar mensajes por DBMS_OUTPUT
 
 set SERVEROUTPUT on;
 
---Mostrar mensajes por bloque anonimo
---Ejemplo 1
+--1 Bloque anidado
+declare
+    v_numero number :=10;
 begin
-    dbms_output.put_line('Hola mundo'); --Print en SQL
-end;
---EJemplo 2: Trabajo de variables en bloques anonimos
-/*
-nombre_variable tipo_dato {: = valor_inicial}
-*/
-declare 
-    v_nombre varchar2(50) := 'Pepe';
-    v_edad number(3) := 70;
-    v_salario number(10,2);
-    v_fecha_hoy date := sysdate;
-    v_activo boolean := false;
-begin
-    --Agignamos el valor en el begin
-    v_salario :=5500.27;
-    dbms_output.put_line('NOMBRE : '||v_nombre);
-    dbms_output.put_line('EDAD: '||v_edad);
-    dbms_output.put_line('Salario : '||v_salario);
-    dbms_output.put_line('FECHA : '||to_char(v_fecha_hoy,'DD/MM/YYYY hh24:MI:SS'));
     
-    --validar la variable booleana
-    if v_activo then 
-        dbms_output.put_line('ESTADO    :INACTIVO');
-    ELSE
-        dbms_output.put_line('ESTADO    : ACIVO');
+    <<Bloque_interno>>
+    declare
+        v_numero number :=5;
+    begin
+        dbms_output.put_line('numero '||v_numero);
+    end Bloque_interno;
+    dbms_output.put_line('numero '||v_numero);
+end;
+/
+
+--2. Bloques anidados controlando una exception
+
+<<bloque_principal>>
+declare 
+    resultado number :=0;
+begin
+        --Bloque interno
+        <<division_segura>>
+        declare
+            numerador number :=10;
+            denominador number :=5;
+        begin
+            resultado:= numerador/denominador;
+        exception
+            when ZERO_DIVIDE THEN 
+                dbms_output.put_line('ERROR INTERNO: Divicsion por 0');
+        
+        end division_segura;
+        dbms_output.put_line('El resultado es: '||resultado);
+exception
+    when others then
+        dbms_output.put_line('Error externo inesperado');
+end bloque_principal;
+/
+
+--3. Recordar el comando if
+
+<<bloque_principal>>
+declare
+    v_edad number := &INRESE_SU_EDAD;
+begin
+    if v_edad>17 then 
+        dbms_output.put_line('Es Mayor de edad');
+    elsif v_edad <=17 and v_edad>=0 then
+        dbms_output.put_line('Es Menor de edad');
+    else
+        dbms_output.put_line('La Edad no puede ser negativa');
     end if;
 end;
---Ejemplo 3: Tomar los tipos de datos de una tabla
+/
 
---Tabla para el ejemplo
-
-create table EMPLEADO(
-    ID_EMP NUMBER(5) PRIMARY KEY,
-    NOMBRE VARCHAR2(50),
-    SALARIO NUMBER(10,2)
-);
-
-INSERT INTO EMPLEADO VALUES(1, 'Ana lopez', 6000.50);
-INSERT INTO EMPLEADO VALUES(2, 'Alan gajardo', 10000.42);
-INSERT INTO EMPLEADO VALUES(3, 'Catalina Jara', 8500.30);
-commit;
-
-declare
-    v_id_empleado EMPLEADO.id_emp%type := 1;
-    v_nombre_emp EMPLEADO.nombre%type := 'Ana lopez';
-    v_salario EMPLEADO.salario%type := 6000.50;
-begin
-    dbms_output.put_line('DETALLE EMPLEADO');
-    dbms_output.put_line('================');
-    dbms_output.put_line('CODIGO    :'||v_id_empleado);
-    dbms_output.put_line('NOMBRE    :'||v_nombre_emp);
-    dbms_output.put_line('SALARIO   :$'||v_salario);
-
-end;
---Ejemplo 4: COnsultas en un bloque anonimo
+--4. Ejemplo utilizando if y DML: 
+--Si el emppelado gana menos de un valor se le ahumentara el sueldo
 
 DECLARE
-    v_id_emp EMPLEADO.id_emp%type :=  &Ingrese_codigo;
-    v_nombre empleado.nombre%type;
-    v_salario empleado.salario%type;
+    v_id empleado.id_empleado%type :=30;
+    v_salario Empleado.salario%type ;
+BEGIN
+    select salario into v_salario from empleado where id_empleado = v_id;
+    
+    if v_salario <1800 then 
+        update empleado set salario = salario * 1.10 where id_empleado=v_id;
+        dbms_output.put_line('El Sueldo a sido aumentado en un 10%');
+    else
+        dbms_output.put_line('No hay aumento');
+    end if;
+EXCEPTION
+    when NO_DATA_FOUND THEN 
+        dbms_output.put_line('NO HAY DATOS RELACIONADOS CON LA ID '||v_id);
+END;
+/
+
+--5. Comando Case
+declare
+    v_dia number:=2;
+    nombre_dia varchar2(20);
 begin
-    select nombre, salario into v_nombre,v_salario from Empleado where id_emp = v_id_emp;
-    dbms_output.put_line('INFORMACIÓN EMPLEADO 😊');
-    dbms_output.put_line('=======================');
-    dbms_output.put_line('Codigo    : '||v_id_emp);
-    dbms_output.put_line('Nombre    : '||v_nombre);
-    dbms_output.put_line('Salario   : $'||v_salario);
-exception
-    when no_data_found then dbms_output.put_line('ERROR, No existe el codigo    :'||v_id_emp);
-    when too_many_rows then dbms_output.put_line('ERROR, Demasiadas filas en id'||v_id_emp);
-    when others then dbms_output.put_line('ERROR Inesperado en id'||v_id_emp);
+    nombre_dia:= case v_dia
+                    WHEN  1 THEN 'LUNES'
+                    WHEN  2 THEN 'MARTES'
+                    WHEN  3 THEN 'MIERCOLES'
+                    WHEN  4 THEN 'JUEVES'
+                    WHEN  5 THEN 'VIERNES'
+                    WHEN  6 THEN 'SABADO'
+                    WHEN  7 THEN 'DOMINGO'
+                    ELSE 'valor no valido'
+                end;
+    dbms_output.put_line('EL DIA ES '||nombre_dia);
 end;
+/
 
---Ejemplo 5: CIclos en bloquees anonimos
+-- 6. Uilizar Case con DML
+--Bajas el sueldo dl empleado con el sueldo mas alto
+--Eliinar el empleado con el sueldo mas alto
+commit;
+savepoint a1;
+rollback;
+DECLARE
+    v_operacion varchar2(10):='&INGRESE_OPCION';
+BEGIN
+    CASE v_operacion
+        when 'borrar' then 
+            delete from empleado where salario = (select max(salario)from empleado);
+            dbms_output.put_line('BORRAR EL EMPLEADO CON EL SUELDO MAS ALTO');
+        WHEN 'actualizar' then 
+            update empleado set salario=round(salario*0.95) 
+            where salario = (select max(salario) from empleado);
+            dbms_output.put_line('ACTUALIZAR EL EMPLEADO CON EL SUELDO MAS ALTO');
+        else
+            dbms_output.put_line('Operacion no valida');
+        end case;
+END;
+/
+
+--7. Ciclo loop
+declare
+    contador_l number :=1;  -- <-- LOOP
+    contador_w number :=1;  -- <-- WHILE
 begin
-    for i in 1..5 loop --CIclo for desde 1 a 5
-        dbms_output.put_line('iteracion numero :'||i);
-        END LOOP;
-end;
-
---Ejemplo 6: CIClo para mostrar los empleados de una tabla
-
-declare 
-    v_total_empleados number :=0; --Variable para cantidad de empleados
-begin
-    dbms_output.put_line('DETALLES DE EMPLEADOS');
-    dbms_output.put_line('---------------------');
-    --Ciclo para recorrer la tabla
-    for i in (select id_emp,nombre,salario from empleado) loop
-        dbms_output.put_line('Codigo    : '||i.id_emp);
-        dbms_output.put_line('Nombre    : '||i.nombre);
-        dbms_output.put_line('Salario   : '||i.salario);
-        v_total_empleados := v_total_empleados +1; --Contador
+--Ciclo loop
+    loop
+        dbms_output.put_line('CONTADOR LOOP: '||contador_l);
+        contador_l:=contador_l+1;
+        exit when contador_l >3;
     end loop;
-    dbms_output.put_line('Cantidad de empleados  :'||v_total_empleados);
-exception
-    when others then dbms_output.put_line('ERROR');
+    --Ciclo FOR    
+    for i in 1..3 loop
+        dbms_output.put_line('CONTADOR FOR: '||i);        
+    end loop;
+    --Ciclo WHILE
+    while contador_w <= 3 loop
+        dbms_output.put_line('CONTADOR WHILE: '||contador_w);
+        contador_w :=contador_w +1;
+    end loop;
 end;
+/
