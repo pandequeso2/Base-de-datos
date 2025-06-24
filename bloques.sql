@@ -1,155 +1,117 @@
-create table Empleado(
+set serveroutput on;
+create table EMPLEADO(
     id_empleado number(5) primary key,
-    nombre varchar2(100),
-    salario number(10,2)
+    nombre varchar2(150),
+    salario number
 );
-insert into empleado values(10,'Pedro Pascal', 2000);
-insert into empleado values(20,'Alan gajardo', 1450);
-insert into empleado values(30,'Juan Pablo Ramos', 1500);
-insert into empleado values(40,'Camila Lara', 3500);
-insert into empleado values(50,'Alejandra Flores', 1300);
+INSERT INTO EMPLEADO VALUES(100,'ALAN GAJARDO',1300000);
+INSERT INTO EMPLEADO VALUES(200,'ADAM CATRIL',750000);
+INSERT INTO EMPLEADO VALUES(300,'PEDRO PASCAL',2300000);
 
 
-set SERVEROUTPUT on;
-
---1 Bloque anidado
-declare
-    v_numero number :=10;
-begin
-    
-    <<Bloque_interno>>
-    declare
-        v_numero number :=5;
-    begin
-        dbms_output.put_line('numero '||v_numero);
-    end Bloque_interno;
-    dbms_output.put_line('numero '||v_numero);
+--1- Variable de Enlace (BIND): variables que se crean fuera de los bloques anonimos, 
+--estas variables permiten sacar datos de los bloques
+VARIABLE v_resultado number;
+--Bloque anonimo
+begin 
+    :v_resultado :=(600000 *1.10);
 end;
 /
+--MOSTRAR RESULTADOS
+print v_resultado;
 
---2. Bloques anidados controlando una exception
 
-<<bloque_principal>>
-declare 
-    resultado number :=0;
+--2- OBTEBER EL SUELDO DE ALAN GAJARDO EN UNA VARIABLE
+variable salario number;
+begin 
+    select salario 
+    into :salario
+    from empleado where id_empleado=100;
+end;
+/
+--Mostrar salaio de alan
+print salario;
+
+/*CURSORES: variables que permiten guardar la respuesta de las consultas */
+
+declare
+    --Cear cursos
+    cursor c_empleados is select id_empleado, nombre,salario from empleado;
+    v_id empleado.id_empleado%type;
+    v_nombre empleado.nombre%type;
+    v_salario empleado.salario%type;
 begin
-        --Bloque interno
-        <<division_segura>>
-        declare
-            numerador number :=10;
-            denominador number :=5;
-        begin
-            resultado:= numerador/denominador;
-        exception
-            when ZERO_DIVIDE THEN 
-                dbms_output.put_line('ERROR INTERNO: Divicsion por 0');
+    open c_empleados; --Para usar el cursor se debe abrir
+    loop 
+        FETCH c_empleados into v_id,v_nombre,v_salario;
+        exit when c_empleados%NOTFOUND;
         
-        end division_segura;
-        dbms_output.put_line('El resultado es: '||resultado);
-exception
-    when others then
-        dbms_output.put_line('Error externo inesperado');
-end bloque_principal;
-/
-
---3. Recordar el comando if
-
-<<bloque_principal>>
-declare
-    v_edad number := &INRESE_SU_EDAD;
-begin
-    if v_edad>17 then 
-        dbms_output.put_line('Es Mayor de edad');
-    elsif v_edad <=17 and v_edad>=0 then
-        dbms_output.put_line('Es Menor de edad');
-    else
-        dbms_output.put_line('La Edad no puede ser negativa');
-    end if;
-end;
-/
-
---4. Ejemplo utilizando if y DML: 
---Si el emppelado gana menos de un valor se le ahumentara el sueldo
-
-DECLARE
-    v_id empleado.id_empleado%type :=30;
-    v_salario Empleado.salario%type ;
-BEGIN
-    select salario into v_salario from empleado where id_empleado = v_id;
+        dbms_output.put_line('ID: '||v_id||' NOMBRE'||v_nombre||' SALARO: $'||v_salario);
+    end loop;
     
-    if v_salario <1800 then 
-        update empleado set salario = salario * 1.10 where id_empleado=v_id;
-        dbms_output.put_line('El Sueldo a sido aumentado en un 10%');
-    else
-        dbms_output.put_line('No hay aumento');
-    end if;
-EXCEPTION
-    when NO_DATA_FOUND THEN 
-        dbms_output.put_line('NO HAY DATOS RELACIONADOS CON LA ID '||v_id);
-END;
-/
-
---5. Comando Case
-declare
-    v_dia number:=2;
-    nombre_dia varchar2(20);
-begin
-    nombre_dia:= case v_dia
-                    WHEN  1 THEN 'LUNES'
-                    WHEN  2 THEN 'MARTES'
-                    WHEN  3 THEN 'MIERCOLES'
-                    WHEN  4 THEN 'JUEVES'
-                    WHEN  5 THEN 'VIERNES'
-                    WHEN  6 THEN 'SABADO'
-                    WHEN  7 THEN 'DOMINGO'
-                    ELSE 'valor no valido'
-                end;
-    dbms_output.put_line('EL DIA ES '||nombre_dia);
+    close c_empleados; --luego de acceder se debe cerrar
 end;
 /
 
--- 6. Uilizar Case con DML
---Bajas el sueldo dl empleado con el sueldo mas alto
---Eliinar el empleado con el sueldo mas alto
-commit;
-savepoint a1;
-rollback;
-DECLARE
-    v_operacion varchar2(10):='&INGRESE_OPCION';
-BEGIN
-    CASE v_operacion
-        when 'borrar' then 
-            delete from empleado where salario = (select max(salario)from empleado);
-            dbms_output.put_line('BORRAR EL EMPLEADO CON EL SUELDO MAS ALTO');
-        WHEN 'actualizar' then 
-            update empleado set salario=round(salario*0.95) 
-            where salario = (select max(salario) from empleado);
-            dbms_output.put_line('ACTUALIZAR EL EMPLEADO CON EL SUELDO MAS ALTO');
-        else
-            dbms_output.put_line('Operacion no valida');
-        end case;
-END;
-/
+--GUARDAR EN UNA VARIABLE DE ENLACE EL TOTAL DE EMPLEADOS QUE TIENEN UN SEULDO MAYOR AL SUELDO MINIMO
 
---7. Ciclo loop
+variable v_cantidad number;
 declare
-    contador_l number :=1;  -- <-- LOOP
-    contador_w number :=1;  -- <-- WHILE
+    cursor c_empleados is
+        select salario from empleado;
+    v_salario empleado.salario%type;
+    v_total     number:=0;
+    v_sueldo_minimo number:=529000;
 begin
---Ciclo loop
-    loop
-        dbms_output.put_line('CONTADOR LOOP: '||contador_l);
-        contador_l:=contador_l+1;
-        exit when contador_l >3;
-    end loop;
-    --Ciclo FOR    
-    for i in 1..3 loop
-        dbms_output.put_line('CONTADOR FOR: '||i);        
-    end loop;
-    --Ciclo WHILE
-    while contador_w <= 3 loop
-        dbms_output.put_line('CONTADOR WHILE: '||contador_w);
-        contador_w :=contador_w +1;
-    end loop;
+    open c_empleados;
+        loop
+            FETCH c_empleados into v_salario;
+            exit when c_empleados%NOTFOUND;
+            if v_salario > v_sueldo_minimo then
+                v_total := v_total +1;            
+            end if;
+        end loop;
+        
+        :v_cantidad:=v_total; --Guardamos en resultado en la variable de enlace
+    close c_empleados;
+
 end;
 /
+print v_cantidad;
+
+/*UTILIZANDO LA VARIABE DE ENLACE Y CURSOR IDENTIFICAR QUIEN ES EL EMPLEADO QUE GANA 
+EL SALARIO MAXIMO*/
+variable nombre_max varchar2(150);
+declare
+    cursor c_empleado is
+        select nombre from empleado;
+    v_nombre Empleado.nombre%type;
+    v_salario empleado.salario%type;
+    v_sueldo_maximo number;
+    v_total number:=0;
+begin
+    select 
+        max(salario)
+    into v_sueldo_maximo
+    from empleado;
+    
+    open c_empleado;
+        loop
+            fetch c_empleado into v_nombre;
+            exit when c_empleado%NOTFOUND;
+            if v_salario = v_sueldo_maximo then 
+                v_total:=v_total+1;
+            end if;
+        end loop;
+    close c_empleado;
+    
+    :nombre_max:=v_nombre;
+end;
+/
+print nombre_max;
+
+
+
+
+
+
